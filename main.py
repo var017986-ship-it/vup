@@ -5,6 +5,7 @@ import sqlite3
 from pathlib import Path
 from urllib.parse import urlparse
 
+from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, F, Router
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
@@ -15,8 +16,14 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 
 
-TOKEN = os.getenv("BOT_TOKEN", "")
-ADMIN_ID = int(os.getenv("ADMIN_ID", os.getenv("ADMIN_TELEGRAM_ID", "0")))
+load_dotenv(Path(__file__).with_name(".env"))
+
+TOKEN = os.getenv("BOT_TOKEN", "").strip()
+ADMIN_VALUE = os.getenv("ADMIN_ID", os.getenv("ADMIN_TELEGRAM_ID", "0")).strip()
+try:
+    ADMIN_ID = int(ADMIN_VALUE)
+except ValueError:
+    ADMIN_ID = 0
 DB_PATH = Path(os.getenv("DATABASE_PATH", "bot.db"))
 
 if not TOKEN or ADMIN_ID <= 0:
