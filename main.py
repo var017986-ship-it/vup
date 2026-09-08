@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, F, Router
+from aiogram.exceptions import TelegramUnauthorizedError
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
@@ -254,7 +255,22 @@ async def stop_mirror(mid):
 
 
 async def main():
-    logging.basicConfig(level=logging.INFO); controller=Bot(TOKEN,default=DefaultBotProperties(parse_mode=ParseMode.HTML)); d=Dispatcher(storage=MemoryStorage()); d.include_router(controller_router)
+    logging.basicConfig(level=logging.INFO)
+    controller=Bot(TOKEN,default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    try:
+        await controller.get_me()
+    except TelegramUnauthorizedError as error:
+        await controller.session.close()
+        raise RuntimeError(
+            "Telegram отклонил BOT_TOKEN. Создайте новый токен через @BotFather "
+            "(/revoke, затем /token) и обновите BOT_TOKEN в настройках хостинга."
+        ) from None
+    except Exception:
+        await controller.session.close()
+        raise RuntimeError(
+            "Не удалось подключиться к Telegram. Проверьте интернет и BOT_TOKEN."
+        ) from None
+    d=Dispatcher(storage=MemoryStorage()); d.include_router(controller_router)
     for m in db.enabled(): await start_mirror(m)
     try: await d.start_polling(controller)
     finally:
